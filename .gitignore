@@ -1,0 +1,11 @@
+.env
+*.env
+!.env.example
+api/.venv/
+api/data/
+__pycache__/
+web/node_modules/
+web/.next/
+web/next-env.d.ts
+web/test-results/
+screenshots/
