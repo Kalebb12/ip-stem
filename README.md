@@ -84,6 +84,63 @@ Screenshots are saved to `screenshots/`.
 
 ---
 
+## Deployment
+
+Two services: the **API** (FastAPI, Docker) and the **web app** (Next.js, Docker or Vercel).
+
+### Option A: one machine with Docker Compose (simplest)
+
+```bash
+# api/.env holds GROQ_API_KEY, YARNGPT_API_KEY, etc. (see api/.env.example)
+docker compose up --build -d
+# web on :3000, API on :8000, data kept in the "senseatlas-data" volume
+```
+
+For a public server, set where the browser will reach each service:
+
+```bash
+WEB_ORIGIN=https://senseatlas.example.com PUBLIC_API_URL=https://api.senseatlas.example.com docker compose up --build -d
+```
+
+### Option B: separate hosts (for example Railway, Render or Fly.io for the API, and Vercel for the web app)
+
+**API**
+```bash
+docker build -f api/Dockerfile -t senseatlas-api .        # build from the repo root
+docker run -p 8000:8000 --env-file api/.env \
+  -e CORS_ORIGINS=https://your-web-app.example.com \
+  -v senseatlas-data:/data senseatlas-api
+```
+
+| Setting | Value |
+|---|---|
+| Dockerfile | `api/Dockerfile`, build context = repository root |
+| Port | `$PORT` (default 8000) |
+| Health check | `GET /system` |
+| Env vars | `GROQ_API_KEY`, `YARNGPT_API_KEY`, `CORS_ORIGINS` (the web app's URL, comma-separated), optional `GROQ_*`, `YARNGPT_VOICE`, `DEMO_MODE` |
+| Volume | mount at `/data` (database, uploads, cached audio) |
+| Instances | **exactly 1**: SQLite, processing jobs and audio tickets live in the process |
+
+**Web**
+```bash
+docker build --build-arg NEXT_PUBLIC_API_URL=https://your-api.example.com -t senseatlas-web web
+docker run -p 3000:3000 senseatlas-web
+```
+
+On Vercel, set the project root to `web/` and add the env var `NEXT_PUBLIC_API_URL=https://your-api.example.com`. It is read at **build** time, so redeploy after changing it. Then set the API's `CORS_ORIGINS` to the Vercel URL.
+
+### Running without a volume
+
+It works. On every start, the API recreates the demo accounts and the published heart lesson. Everything else lives in `/data` and is lost when the container restarts or redeploys:
+
+- teacher uploads and edits
+- registered accounts, student progress and quiz scores
+- cached audio, so YarnGPT credits are spent again to regenerate it
+
+Anyone signed in is signed out after a restart. Hosts that sleep idle free instances (such as Render's free tier) restart the container, and so reset the data, after about 15 minutes without traffic, followed by a slow cold start. Before a live demo, open the site a few minutes early, and pre-play the lesson in each language if you are not using a volume.
+
+---
+
 ## Architecture
 
 ```

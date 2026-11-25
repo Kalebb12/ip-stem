@@ -49,6 +49,7 @@ await page.keyboard.press("ArrowDown");
 const current = await page.locator('#hero-panel-structures .structure-list button[aria-current="true"]').innerText();
 ok("hero explorer: arrow keys move selection", /Left atrium/.test(current), current.trim());
 ok("hero explorer: detail shows selected", await page.locator("#hero-detail-h").innerText() === "Left atrium");
+await page.waitForFunction(() => /Upper chamber/.test(document.querySelector('[role="status"]')?.textContent ?? ""), null, { timeout: 3000 }).catch(() => {});
 const liveText = await page.locator('[role="status"]').first().innerText();
 ok("hero explorer: new detail announced without repeating the name", /Upper chamber on the patient's left/.test(liveText) && !/^Left atrium/.test(liveText), liveText.slice(0, 60));
 await page.locator("#hero-detail-h").scrollIntoViewIfNeeded();

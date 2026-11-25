@@ -1,0 +1,21 @@
+# Run the whole demo on one machine:  docker compose up --build
+# Secrets come from api/.env (never baked into the image).
+services:
+  api:
+    build: { context: ., dockerfile: api/Dockerfile }
+    env_file: api/.env
+    environment:
+      CORS_ORIGINS: ${WEB_ORIGIN:-http://localhost:3000}
+    ports: ["8000:8000"]
+    volumes: ["senseatlas-data:/data"]   # database, uploads, cached audio survive restarts
+    restart: unless-stopped
+  web:
+    build:
+      context: web
+      args:
+        NEXT_PUBLIC_API_URL: ${PUBLIC_API_URL:-http://localhost:8000}
+    ports: ["3000:3000"]
+    depends_on: [api]
+    restart: unless-stopped
+volumes:
+  senseatlas-data:
