@@ -1,0 +1,34 @@
+# Render Blueprint: New > Blueprint > pick this repo. Creates the API and the web app.
+# Secrets (sync: false) are typed in once in the Render dashboard; they are never stored here.
+services:
+  - type: web
+    name: senseatlas-api
+    runtime: docker
+    plan: free                      # no persistent disk on free: data resets on restart (demo still works)
+    dockerfilePath: ./api/Dockerfile
+    dockerContext: .                # repo root, so samples/heart-lecture.pdf is included for seeding
+    healthCheckPath: /system
+    envVars:
+      - key: GROQ_API_KEY
+        sync: false
+      - key: YARNGPT_API_KEY
+        sync: false
+      - key: CORS_ORIGINS           # the web app's URL, e.g. https://senseatlas-web.onrender.com
+        sync: false
+      - key: DEMO_MODE
+        value: "1"
+    # On a paid plan, keep data across restarts:
+    # disk:
+    #   name: senseatlas-data
+    #   mountPath: /data
+    #   sizeGB: 1
+
+  - type: web
+    name: senseatlas-web
+    runtime: docker
+    plan: free
+    dockerfilePath: ./web/Dockerfile
+    dockerContext: ./web
+    envVars:
+      - key: NEXT_PUBLIC_API_URL    # the API's URL, e.g. https://senseatlas-api.onrender.com (used at build time)
+        sync: false
