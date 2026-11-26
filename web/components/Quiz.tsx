@@ -38,14 +38,14 @@ export default function Quiz({ lessonId, items, canSubmit, onDone }: { lessonId:
   return (
     <div>
       <p>{items.length} questions. Check each answer as you go, or answer them all and finish at the end. This is practice, not a test.</p>
-      <ol style={{ paddingLeft: "1.3rem" }}>
+      <ol className="quiz-list">
         {items.map((q, qi) => {
           const done = checked[q.id];
           const ok = answers[q.id] === q.answer;
           return (
-            <li key={q.id} style={{ marginBottom: "1.5rem" }}>
+            <li key={q.id}>
               <fieldset>
-                <legend>{q.question}</legend>
+                <legend><span className="q-num" aria-hidden="true">{qi + 1}. </span>{q.question}</legend>
                 {q.options.map((o, oi) => (
                   <label key={oi} className="choice">
                     <input type="radio" name={`quiz-${q.id}`} checked={answers[q.id] === oi} disabled={!!result}
